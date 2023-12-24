@@ -1,0 +1,105 @@
+name: Deploy to Amazon ECS
+
+on:
+  push:
+    branches: [ "main" ]
+
+env:
+  AWS_REGION: ap-southeast-2                   # set this to your preferred AWS region, e.g. us-west-1
+  ECR_REPOSITORY: portfolio           # set this to your Amazon ECR repository name
+  ECS_SERVICE: blogappnewservice                 # set this to your Amazon ECS service name
+  ECS_CLUSTER: mydevcluster2                 # set this to your Amazon ECS cluster name
+  ECS_TASK_DEFINITION: .aws/taskBlogApp-revision1.json # set this to the path to your Amazon ECS task definition
+                                               # file, e.g. .aws/task-definition.json
+  CONTAINER_NAME: myblogapp1           # set this to the name of the container in the
+                                               # containerDefinitions section of your task definition
+
+permissions:
+  contents: read
+
+jobs:
+  deploy:
+    name: Deploy
+    runs-on: ubuntu-latest
+    environment: production
+
+    steps:
+    - name: Checkout
+      uses: actions/checkout@v3
+
+    - name: Configure AWS credentials
+      uses: aws-actions/configure-aws-credentials@v1
+      with:
+        aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+        aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+        aws-region: ${{ env.AWS_REGION }}
+
+    - name: Login to Amazon ECR
+      id: login-ecr
+      uses: aws-actions/amazon-ecr-login@v1
+
+    - name: Build, tag, and push image portfolio to Amazon ECR
+      id: build-image-portfolio
+      env:
+        ECR_REGISTRY: ${{ steps.login-ecr.outputs.registry }}
+        IMAGE_TAG: ${{ github.sha }}
+        IMAGE_PRE: portfolio
+      run: |
+        # Build a docker container and
+        # push it to ECR so that it can
+        # be deployed to ECS.
+        docker build -t $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_PRE$IMAGE_TAG .
+        docker push $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_PRE$IMAGE_TAG
+        echo "image=$ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_PRE$IMAGE_TAG" >> $GITHUB_OUTPUT
+      working-directory: ./Profiolio_MVC/
+
+    - name: Deploy docker image to EC2
+      env:
+        PRIVATE_KEY: ${{ secrets.SSH_PRIVATE_KEY }}
+        HOSTNAME: 3.27.234.55
+        USER_NAME: ubuntu
+        ECR_REGISTRY: ${{ steps.login-ecr.outputs.registry }}
+        IMAGE_TAG: ${{ github.sha }}
+      run: |
+        export LC_USER_NAME=$USER_NAME ;
+        export LC_REGISTRY=$ECR_REGISTRY ;
+        export LC_REPOSITORY=$ECR_REPOSITORY ;
+        export LC_IMAGE_TAG=$IMAGE_TAG ;
+        echo "$PRIVATE_KEY" > private_key.pem && chmod 600 private_key.pem
+        sudo ssh -tt -o "SendEnv LC_*" -o StrictHostKeyChecking=no -i private_key.pem ${USER_NAME}@${HOSTNAME} '
+          #now update needed software .
+          #echo $LC_USER_NAME
+          sudo apt update  
+          sudo apt install docker.io -y 
+          sudo apt install awscli -y 
+          sudo apt install nginx -y
+          #login to ECR, require you first hand touch to remote and input the info of sudo aws configure.
+          sudo usermod -a -G docker $LC_USER_NAME
+          sudo aws ecr get-login-password --region ap-southeast-2 | sudo docker login --username AWS --password-stdin $LC_REGISTRY/$LC_REPOSITORY
+          #stop backend .
+          sudo docker stop portfolio || true 
+          sudo docker rm portfolio || true 
+          #sudo docker network rm alpine-net
+          sudo docker rmi -f $(docker images -q)
+          docker pull $LC_REGISTRY/$LC_REPOSITORY:backend$LC_IMAGE_TAG
+          docker pull $LC_REGISTRY/$LC_REPOSITORY:frontend$LC_IMAGE_TAG
+          sudo docker rm  $(docker ps -q -a)
+          sudo docker network create --driver bridge alpine-net
+          sudo docker run -dit --name portfolio --network alpine-net --restart unless-stopped -p 7021:7021 $LC_REGISTRY/$LC_REPOSITORY:portfolio$LC_IMAGE_TAG 
+          #sudo docker run -dit --name frontend --network alpine-net -p 80:80 $LC_REGISTRY/$LC_REPOSITORY:frontend$LC_IMAGE_TAG 
+          '
+    # - name: Fill in the new image ID in the Amazon ECS task definition
+    #   id: task-def
+    #   uses: aws-actions/amazon-ecs-render-task-definition@v1
+    #   with:
+    #     task-definition: ${{ env.ECS_TASK_DEFINITION }}
+    #     container-name: ${{ env.CONTAINER_NAME }}
+    #     image: ${{ steps.build-image.outputs.image }}
+
+    # - name: Deploy Amazon ECS task definition
+    #   uses: aws-actions/amazon-ecs-deploy-task-definition@v1
+    #   with:
+    #     task-definition: ${{ steps.task-def.outputs.task-definition }}
+    #     service: ${{ env.ECS_SERVICE }}
+    #     cluster: ${{ env.ECS_CLUSTER }}
+    #     wait-for-service-stability: true
