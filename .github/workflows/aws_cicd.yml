@@ -85,7 +85,7 @@ jobs:
           docker pull $LC_REGISTRY/$LC_REPOSITORY:frontend$LC_IMAGE_TAG
           sudo docker rm  $(docker ps -q -a)
           sudo docker network create --driver bridge alpine-net
-          sudo docker run -dit --name portfolio --network alpine-net --restart unless-stopped -p 7021:7021 $LC_REGISTRY/$LC_REPOSITORY:portfolio$LC_IMAGE_TAG 
+          sudo docker run -dit --name portfolio --network alpine-net --restart unless-stopped -p 7021:80 $LC_REGISTRY/$LC_REPOSITORY:portfolio$LC_IMAGE_TAG 
           #sudo docker run -dit --name frontend --network alpine-net -p 80:80 $LC_REGISTRY/$LC_REPOSITORY:frontend$LC_IMAGE_TAG 
           '
     # - name: Fill in the new image ID in the Amazon ECS task definition
