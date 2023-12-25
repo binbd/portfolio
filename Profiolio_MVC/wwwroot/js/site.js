@@ -5,29 +5,8 @@
   /**
    * Mobile nav toggle
    */
-//   $('.mobile-nav-toggle').on('click', function(e) {
-//     select('body').classList.toggle('mobile-nav-active')
-//     this.classList.toggle('bi-list')
-//     this.classList.toggle('bi-x')
-//   })
 
-//   /**
-//    * Scrool with ofset on links with a class name .scrollto
-//    */
-//   $('.scrollto-nav-toggle').on('click', function(e) {
-//     if (select(this.hash)) {
-//       e.preventDefault()
 
-//       let body = select('body')
-//       if (body.classList.contains('mobile-nav-active')) {
-//         body.classList.remove('mobile-nav-active')
-//         let navbarToggle = select('.mobile-nav-toggle')
-//         navbarToggle.classList.toggle('bi-list')
-//         navbarToggle.classList.toggle('bi-x')
-//       }
-//       scrollto(this.hash)
-//     }
-//   }, true)
 (function() {
     "use strict";
   
@@ -67,24 +46,58 @@
     /**
      * Navbar links active state on scroll
      */
-    let navbarlinks = select('#navbar .scrollto', true)
-    const navbarlinksActive = () => {
-      let position = window.scrollY + 200
-      navbarlinks.forEach(navbarlink => {
-        if (!navbarlink.hash) return
-        let section = select(navbarlink.hash)
-        if (!section) return
-        if (position >= section.offsetTop && position <= (section.offsetTop + section.offsetHeight)) {
-          navbarlink.classList.add('active')
-        } else {
-          navbarlink.classList.remove('active')
+    // let navbarlinks = select('#navbar .scrollto', true)
+    // const navbarlinksActive = () => {
+    //   let position = window.scrollY + 200
+    //   navbarlinks.forEach(navbarlink => {
+    //     if (!navbarlink.hash) return
+    //     let section = select(navbarlink.hash)
+    //     if (!section) return
+    //     if (position >= section.offsetTop && position <= (section.offsetTop + section.offsetHeight)) {
+    //       navbarlink.classList.add('active')
+    //     } else {
+    //       navbarlink.classList.remove('active')
+    //     }
+    //   })
+    // }
+    // window.addEventListener('load', navbarlinksActive)
+    // onscroll(document, navbarlinksActive)
+  
+
+     let navbarlinks = select('#navbar .scrollto', true)
+     
+     const navbarlinksActive = () => {
+      let section = select('.mypage')
+      if(!section) return
+      var matches = false;
+    //   let position = window.scrollY + 200
+       navbarlinks.forEach(navbarlink => {
+    //     if (!navbarlink.hash) return
+        //console.log(navbarlink.classList);
+        navbarlink.classList.remove('active');
+        if(!matches){
+          section.classList.forEach(entry => {
+            if(!matches)
+              matches = navbarlink.classList.contains(entry);
+            else return
+          })
+          if(matches)
+            {navbarlink.classList.add('active')}
         }
-      })
-    }
-    window.addEventListener('load', navbarlinksActive)
-    onscroll(document, navbarlinksActive)
-  
-  
+          
+        
+        
+
+    //     if (!section) return
+    //     if (position >= section.offsetTop && position <= (section.offsetTop + section.offsetHeight)) {
+    //       navbarlink.classList.add('active')
+    //     } else {
+    //       navbarlink.classList.remove('active')
+    //     }
+       })
+     }
+     window.addEventListener('load', navbarlinksActive)
+
 
     /**
      * Scrolls to an element with header offset
@@ -97,6 +110,21 @@
       })
     }
   
+    // toggleNavMenu = (clas)=>{
+    //   let navbarlinks = select('#navbar .scrollto', true)
+        
+    //     navbarlinks.forEach(navbarlink => {
+    //       if (!navbarlink.hash) return
+    //       let section = select(navbarlink.hash)
+    //       if (!section) return
+    //       if(navbarlink.classList.contains('active'))
+    //         navbarlink.classList.remove('active')
+    //       if(navbarlink.classList.contains(clas))
+    //         navbarlink.classList.remove('active')
+    //     })
+    
+    // }
+
     /**
      * Back to top button
      */
@@ -123,12 +151,12 @@
     })
   
     /**
-     * Scrool with ofset on links with a class name .scrollto
+     * Scroll with ofset on links with a class name .scrollto
      */
     on('click', '.scrollto', function(e) {
-      if (select(this.hash)) {
+      if (this.hash && select(this.hash)) {
         e.preventDefault()
-  
+        
         let body = select('body')
         if (body.classList.contains('mobile-nav-active')) {
           body.classList.remove('mobile-nav-active')
@@ -136,10 +164,12 @@
           navbarToggle.classList.toggle('bi-list')
           navbarToggle.classList.toggle('bi-x')
         }
-        scrollto(this.hash)
+        //scrollto(this.hash)
       }
     }, true)
   
+    
+
       /**
    * Hero type effect
    */

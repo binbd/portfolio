@@ -39,41 +39,32 @@
       <nav id="navbar" class="nav-menu navbar">
         <ul>
           <li>
-            <a asp-area="" class="nav-link scrollto active" asp-controller="Home" asp-action="Index">
+            <a  asp-area="" class="nav-link scrollto home active" asp-controller="Home" asp-action="Index">
               <i class="bx bx-home"></i> <span>Home</span></a>
           </li>
           <li>
-            <a asp-area="" class="nav-link scrollto" asp-controller="Home" asp-action="About">
+            <a  asp-area="" class="nav-link scrollto about" asp-controller="Home" asp-action="About">
               <i class="bx bx-user"></i> <span>About</span>
             </a>
           </li>
           <li>
-            <a asp-area="" class="nav-link scrollto" asp-controller="Home" asp-action="Resume">
+            <a  asp-area="" class="nav-link scrollto resume" asp-controller="Home" asp-action="Resume">
               <i class="bx bx-file-blank"></i> <span>Resume</span>
             </a>
           </li>
 
           <li>
-            <a asp-area="" class="nav-link scrollto" asp-controller="Home" asp-action="Project">
+            <a  asp-area="" class="nav-link scrollto project" asp-controller="Home" asp-action="Project">
               <i class="bx bx-book-content"></i> <span>Project</span>
             </a>
           </li>
 
           <li>
-            <a asp-area="" class="nav-link scrollto" asp-controller="Home" asp-action="Contact">
+            <a  asp-area="" class="nav-link scrollto contact" asp-controller="Home" asp-action="Contact">
               <i class="bx bx-envelope"></i> <span>Contact</span>
             </a>
           </li>
 
-
-          @* <li><a href="#about" class="nav-link scrollto"><i class=bx bx-user"></i> <span>About</span></a></li>
-          @*<li><a href="#resume" class="nav-link scrollto"><i class="bx bx-file-blank"></i>
-          <span>Resume</span></a></li>
-          @*<li><a href="#project" class="nav-link scrollto"><i class="bx bx-book-content"></i>
-          <span>Project</span></a></li>
-          <li><a href="#services" class="nav-link scrollto"><i class="bx bx-server"></i>
-          <span>Services</span></a></li>
-          <li><a href="#contact" class="nav-link scrollto"><i class="bx bx-envelope"></i> <span>Contact</span></a></li>*@
         </ul>
       </nav><!-- .nav-menu -->
     </div>
@@ -92,7 +83,7 @@
   <footer id="footer">
     <div class="container">
       <div class="copyright">
-        &copy; Copyright <strong><span>AAA</span></strong>
+        Welcome
       </div>
 
     </div>
@@ -103,6 +94,7 @@
   <script src="~/lib/typed.js/typed.umd.js"></script>
 
   <script src="~/js/site.js" asp-append-version="true"></script>
+  @* <script src="~/js/site1.js" asp-append-version="true"></script> *@
   @await RenderSectionAsync("Scripts", required: false)
 </body>
 
