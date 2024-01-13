@@ -1,0 +1,32 @@
+<div class="progress" style="height: 1px;">
+    <div class="progress-bar" role="progressbar" style="width:0"></div>
+</div>
+<div class="container">
+        <h1 class="mt-5">Page Statistics</h1>
+
+        <div class="row mt-4">
+            <div class="col">
+                <h2>Total Page Views</h2>
+                <p id="totalPageViews" class="lead">0</p>
+            </div>
+	    </div>
+        <div class="row mt-4">
+            <div class="col">
+                <h2>Online Viewers</h2>
+                <p id="currentOnlineUsers" class="lead">0</p>
+            </div>
+        </div>
+        <div class="row mt-4">
+            <div class="col">
+                <h2>Logged In Users</h2>
+                <p id="currentLoggedInUsers" class="lead">0</p>
+            </div>
+        </div>
+        <input type="hidden" id="visitorId" value="@ViewBag.visitorId" />
+</div>
+
+@section scripts{
+    <script src="~/js/ajax.js" asp-append-version="true"></script>
+    <script src="~/js/viewingstatistic.js" asp-append-version="true"></script>
+    
+}

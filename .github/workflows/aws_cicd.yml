@@ -56,8 +56,8 @@ jobs:
     - name: Deploy docker image to EC2
       env:
         PRIVATE_KEY: ${{ secrets.SSH_PRIVATE_KEY }}
-        HOSTNAME: 54.79.62.57
-        USER_NAME: ubuntu
+        HOSTNAME: 45.147.249.204
+        USER_NAME: root
         ECR_REGISTRY: ${{ steps.login-ecr.outputs.registry }}
         IMAGE_TAG: ${{ github.sha }}
       run: |
@@ -81,8 +81,8 @@ jobs:
           sudo docker rm portfolio || true 
           #sudo docker network rm alpine-net
           sudo docker rmi -f $(docker images -q)
-          docker pull $LC_REGISTRY/$LC_REPOSITORY:backend$LC_IMAGE_TAG
-          docker pull $LC_REGISTRY/$LC_REPOSITORY:frontend$LC_IMAGE_TAG
+          docker pull $LC_REGISTRY/$LC_REPOSITORY:portfolio$LC_IMAGE_TAG
+          #docker pull $LC_REGISTRY/$LC_REPOSITORY:frontend$LC_IMAGE_TAG
           sudo docker rm  $(docker ps -q -a)
           sudo docker network create --driver bridge alpine-net
           sudo docker run -dit --name portfolio --network alpine-net --restart unless-stopped -p 7021:80 $LC_REGISTRY/$LC_REPOSITORY:portfolio$LC_IMAGE_TAG 

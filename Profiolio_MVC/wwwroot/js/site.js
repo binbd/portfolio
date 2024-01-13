@@ -76,11 +76,16 @@
         //console.log(navbarlink.classList);
         navbarlink.classList.remove('active');
         if(!matches){
-          section.classList.forEach(entry => {
+          const classes = section.classList;
+          //const iterator = classes.values();
+
+          classes.forEach(function (value, key, listObj) {
             if(!matches)
-              matches = navbarlink.classList.contains(entry);
-            else return
-          })
+              matches = navbarlink.classList.contains(value);
+          else return false; //break the loop
+          return true;
+          }, "arg");
+          //classes.forEach(entry => { })
           if(matches)
             {navbarlink.classList.add('active')}
         }
