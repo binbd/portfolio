@@ -10,7 +10,9 @@ RUN dotnet publish -c Release -o out
 
 # Build runtime image
 FROM mcr.microsoft.com/dotnet/aspnet:7.0
+#ENV DOTNET_URLS=http://+:7021
+#ENV ASPNETCORE_URLS=http://+:7021
 WORKDIR /App
 EXPOSE 7021
 COPY --from=build-env /App/out .
-ENTRYPOINT ["dotnet", "Profiolio_MVC.dll"]
+ENTRYPOINT ["dotnet", "Profiolio_MVC.dll","--environment=production"]
