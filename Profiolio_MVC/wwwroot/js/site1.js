@@ -17,8 +17,11 @@ function SetViewingPingTimer(timer)
         var data = {
             visitorId:val
         }
-        doAjax(data,'Home/ViewerPing','GET');
-        doAjax('','Home/ViewerStatusUpdate','GET',function(error){
+        var pathname = window.location.pathname;
+        console.log(pathname);
+        var url = pathname ? '' : 'Home/';
+        doAjax(data,url + 'ViewerPing','GET');
+        doAjax('',url + 'ViewerStatusUpdate','GET',function(error){
             console.log(error);
         });
     }, timer);
