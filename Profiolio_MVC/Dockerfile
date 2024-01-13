@@ -7,7 +7,7 @@ COPY . ./
 RUN dotnet restore
 # Build and publish a release
 RUN dotnet publish -c Release -o out
-COPY Portfolio.db /out
+#COPY Portfolio.db /out
 # Build runtime image
 FROM mcr.microsoft.com/dotnet/aspnet:7.0
 #ENV DOTNET_URLS=http://+:7021
@@ -15,5 +15,5 @@ FROM mcr.microsoft.com/dotnet/aspnet:7.0
 WORKDIR /App
 EXPOSE 7021
 COPY --from=build-env /App/out .
-#COPY --from=build-env /App/Portfolio.db .
+COPY --from=build-env /App/Portfolio.db .
 ENTRYPOINT ["dotnet", "Profiolio_MVC.dll"]
