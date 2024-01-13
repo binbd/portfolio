@@ -15,4 +15,4 @@ FROM mcr.microsoft.com/dotnet/aspnet:7.0
 WORKDIR /App
 EXPOSE 7021
 COPY --from=build-env /App/out .
-ENTRYPOINT ["dotnet", "Profiolio_MVC.dll","--environment=production"]
+ENTRYPOINT ["dotnet", "Profiolio_MVC.dll","--environment=Production"]
