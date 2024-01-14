@@ -2,7 +2,6 @@
 using System.Diagnostics;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
-using Microsoft.VisualBasic;
 using Profiolio_MVC.Data;
 using Profiolio_MVC.Models;
 
@@ -12,7 +11,7 @@ public class HomeController : Controller
 {
     private readonly ILogger<HomeController> _logger;
     private myDbContext _dbContext;
-    public HomeController(ILogger<HomeController> logger,myDbContext dbContext)
+    public HomeController(ILogger<HomeController> logger, myDbContext dbContext)
     {
         _logger = logger;
         _dbContext = dbContext;
@@ -20,50 +19,87 @@ public class HomeController : Controller
 
     private void CheckingViewing()
     {
-            // var user = await _userManager.GetUserAsync(User);
-        string? visitorId = (string?)HttpContext.Items["visitorId"];
-        
+        // var user = await _userManager.GetUserAsync(User);
+
         UpdateUnViewedList(30);
 
-        if(string.IsNullOrEmpty(visitorId))
-            return ;
+        if (HttpContext != null)
+        {
+            string? visitorId = HttpContext.Request.Cookies["VisitorId"];
+            System.Net.IPAddress? iPAddress = HttpContext.Connection.RemoteIpAddress;
+            string remoteAddress = "";
+            if (iPAddress != null)
+                remoteAddress = iPAddress.MapToIPv4().ToString();
+            if (visitorId == null)
+            {
+                //don the necessary staffs here to save the count by one
 
+                visitorId = Guid.NewGuid().ToString();
+                HttpContext.Response.Cookies.Append("VisitorId", visitorId, new CookieOptions()
+                {
+                    Path = "/",
+                    HttpOnly = true,
+                    Secure = false,
+                });
 
-        ViewBag.visitorId = visitorId;
-        TempData["visitorId"] = visitorId;
-        ConcurrentDictionary<string,object> visitorObj = (ConcurrentDictionary<string,object>)Config.Application["Visitor"];
-        ViewerCounting viewerCounting =  (ViewerCounting)visitorObj[visitorId];
-        var tmpVCs =_dbContext.viewerCountings.Where(b => b.ClientId == viewerCounting.ClientId).ToList();
-        ViewerCounting? tmpVC = null;
-        if(tmpVCs == null || tmpVCs.Count() <=0  ){
+            }
 
-             tmpVC = viewerCounting;//new ViewerCounting();
-            //tmpVC.IsCurrentViewing  = false;
-            //tmpVC.ClientId          = viewerCounting.ClientId;
-            //tmpVC.FirstViewing      = viewerCounting.FirstViewing;
-            //tmpVC.LastViewing       = viewerCounting.LastViewing;
-            _dbContext.viewerCountings.Add(tmpVC);
-            _dbContext.SaveChanges();
+            if (!Config.Application.Keys.Contains("Visitor"))
+            {
+
+                Config.Application["Visitor"] = new ConcurrentDictionary<string, object>();
+            }
+
+            ConcurrentDictionary<string, object> visitorObj = (ConcurrentDictionary<string, object>)Config.Application["Visitor"];
+
+            if (!visitorObj.Keys.Contains(visitorId))
+            {
+                //context.Items["visitorId"] = visitorId;
+                //loading from DB
+                ViewerCounting? viewerCounting = _dbContext.viewerCountings.Include(x => x.ViewerLoggins).Where(b => b.ClientId == visitorId). First();
+
+                if (viewerCounting == null) //new
+                {
+                    viewerCounting = new ViewerCounting();
+                    viewerCounting.ClientId = visitorId;
+                    viewerCounting.IsCurrentViewing = true;
+                    viewerCounting.FirstViewing = DateTime.UtcNow;
+                    viewerCounting.LastViewing = DateTime.UtcNow;
+                    ViewerLoggin viewerLoggin = new ViewerLoggin();
+                    viewerLoggin.ClientIp = remoteAddress;
+                    viewerLoggin.LogginTime = DateTime.UtcNow;
+                    viewerCounting.ViewerLoggins.Add(viewerLoggin);
+                    _dbContext.viewerCountings.Add(viewerCounting);
+                    _dbContext.SaveChanges();
+                    //Config.Application["VisitorId"] = viewerCounting;
+                }
+                else
+                {
+                    if (!viewerCounting.IsCurrentViewing)
+                    {
+
+                        ViewerLoggin viewerLoggin = new()
+                        {
+                            ClientIp = remoteAddress,
+                            LogginTime = DateTime.UtcNow,
+                        };
+                        viewerCounting.IsCurrentViewing = true;
+                        viewerCounting.ViewerLoggins.Add(viewerLoggin);
+                        viewerCounting.LastViewing = DateTime.UtcNow;
+                        _dbContext.Entry(viewerCounting).State = EntityState.Modified;
+                        _dbContext.SaveChanges();
+
+                    }
+                }
+
+                visitorObj[visitorId] = viewerCounting;
+            }
+
+            ViewBag.visitorId = visitorId;
+            TempData["visitorId"] = visitorId;
+            //HttpContext.Items["visitorId"] = visitorId;
         }
-        else{
-            tmpVC = tmpVCs.ElementAt(0);
-        }
-
-        if(!tmpVC.IsCurrentViewing){
-
-            ViewerLoggin viewerLoggin   = (ViewerLoggin)viewerCounting.ViewerLoggins.ElementAt(0);
-            tmpVC.IsCurrentViewing      = true;
-            tmpVC.ViewerLoggins.Add(viewerLoggin);
-            tmpVC.LastViewing = viewerCounting.LastViewing;
-            _dbContext.Entry(tmpVC).State = EntityState.Modified;
-            _dbContext.SaveChanges();
-            
-        }
-        //update with database
-        visitorObj[visitorId] = tmpVC;
-        //HttpContext.Items["visitorId"] = visitorId;
     }
-
     public IActionResult Index()
     {
         CheckingViewing();
@@ -75,7 +111,7 @@ public class HomeController : Controller
         return View();
     }
 
-     public IActionResult About()
+    public IActionResult About()
     {
         CheckingViewing();
         return View();
@@ -113,14 +149,15 @@ public class HomeController : Controller
 
         //if(visitorId == svisitorId)
         {
-            
-            ConcurrentDictionary<string,object> visitorObj = (ConcurrentDictionary<string,object>)Config.Application["Visitor"];
-            ViewerCounting? viewerCounting =  visitorObj.Keys.Contains(visitorId) ? (ViewerCounting)visitorObj[visitorId] : null;
+
+            ConcurrentDictionary<string, object> visitorObj = (ConcurrentDictionary<string, object>)Config.Application["Visitor"];
+            ViewerCounting? viewerCounting = visitorObj.Keys.Contains(visitorId) ? (ViewerCounting)visitorObj[visitorId] : null;
+            //ViewerCounting? viewerCounting = _dbContext.viewerCountings.Where()
             ViewBag.visitorId = visitorId;
-            if(viewerCounting== null)
+            if (viewerCounting == null)
                 return StatusCode(StatusCodes.Status404NotFound);
 
-            if(!viewerCounting.IsCurrentViewing)
+            if (!viewerCounting.IsCurrentViewing)
                 viewerCounting.IsCurrentViewing = true;
 
             viewerCounting.LastViewing = DateTime.UtcNow;
@@ -131,20 +168,20 @@ public class HomeController : Controller
         return StatusCode(StatusCodes.Status200OK);
 
     }
-    
+
     public int UpdateUnViewedList(int nTimeOut)
     {
-        var ViewerCountings = _dbContext.viewerCountings.Where(x=>x.IsCurrentViewing == true).ToList();
+        var ViewerCountings = _dbContext.viewerCountings.Where(x => x.IsCurrentViewing == true).ToList();
         int nOnlineCounting = ViewerCountings.Count();
-        
+
         if (ViewerCountings == null)
             throw new InvalidOperationException("No viewing data is found!");
 
         int nchangedCount = 0;
-        foreach(ViewerCounting vc in ViewerCountings )
+        foreach (ViewerCounting vc in ViewerCountings)
         {
             var dt = DateTime.UtcNow - vc.LastViewing;
-            if( dt.TotalMinutes > nTimeOut)
+            if (dt.TotalMinutes > nTimeOut)
             {
                 vc.IsCurrentViewing = false;
                 _dbContext.viewerCountings.Entry(vc).State = EntityState.Modified;
@@ -153,33 +190,35 @@ public class HomeController : Controller
 
         }
 
-        int nTotalView    = 0;
-        foreach(ViewerCounting vc in _dbContext.viewerCountings.Include(x => x.ViewerLoggins))
+        int nTotalView = 0;
+        foreach (ViewerCounting vc in _dbContext.viewerCountings.Include(x => x.ViewerLoggins))
         {
             nTotalView += vc.ViewerLoggins.Count();
         }
 
         var settings = _dbContext.settingsNumbers.Where(x => x.Key == "TOTALVIEWONLINE").ToList();
 
-        if( settings == null || settings.Count()==0)
-            _dbContext.settingsNumbers.Add(new SettingsNumber(){ Key = "TOTALVIEWONLINE", Value = nOnlineCounting });
+        if (settings == null || settings.Count() == 0)
+            _dbContext.settingsNumbers.Add(new SettingsNumber() { Key = "TOTALVIEWONLINE", Value = nOnlineCounting });
         else
         {
-            settings.ForEach(x => { 
-                if(x.Key=="TOTALVIEWONLINE") 
-                    x.Value = nOnlineCounting;  
-                _dbContext.settingsNumbers.Entry(x).State = EntityState.Modified; 
+            settings.ForEach(x =>
+            {
+                if (x.Key == "TOTALVIEWONLINE")
+                    x.Value = nOnlineCounting;
+                _dbContext.settingsNumbers.Entry(x).State = EntityState.Modified;
             });
         }
-        
+
         settings = _dbContext.settingsNumbers.Where(x => x.Key == "TOTALVIEW").ToList();
 
-        if( settings == null || settings.Count()==0)
-            _dbContext.settingsNumbers.Add(new SettingsNumber(){ Key = "TOTALVIEW", Value = nTotalView });
+        if (settings == null || settings.Count() == 0)
+            _dbContext.settingsNumbers.Add(new SettingsNumber() { Key = "TOTALVIEW", Value = nTotalView });
         else
         {
-            settings.ForEach(x => { 
-                if(x.Key=="TOTALVIEW") 
+            settings.ForEach(x =>
+            {
+                if (x.Key == "TOTALVIEW")
                     x.Value = nTotalView;
                 _dbContext.settingsNumbers.Entry(x).State = EntityState.Modified;
             });
@@ -202,20 +241,20 @@ public class HomeController : Controller
         }
         catch (System.Exception ex)
         {
-            return StatusCode(StatusCodes.Status400BadRequest,ex.Message);
-             // TODO
+            return StatusCode(StatusCodes.Status400BadRequest, ex.Message);
+            // TODO
         }
-       
+
         return StatusCode(StatusCodes.Status200OK);
     }
 
     [HttpGet]
     public IActionResult GetViewStatistic()
     {
-        
-        var totalView        =  _dbContext.settingsNumbers.Where(x => x.Key == "TOTALVIEWONLINE").ToList();
+
+        var totalView = _dbContext.settingsNumbers.Where(x => x.Key == "TOTALVIEWONLINE").ToList();
         var ntotalViewOnline = totalView.Count() > 0 ? totalView.ElementAt(0).Value : 0;
-        totalView  =_dbContext.settingsNumbers.Where(x => x.Key == "TOTALVIEW").ToList();
+        totalView = _dbContext.settingsNumbers.Where(x => x.Key == "TOTALVIEW").ToList();
         var ntotalView = totalView.Count() > 0 ? totalView.ElementAt(0).Value : 0;
         //_dbcontext.SaveChanges();
         ViewingStatistic viewing = new()

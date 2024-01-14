@@ -40,7 +40,7 @@ app.UseForwardedHeaders(new ForwardedHeadersOptions
 });  
 app.UseAuthorization();
 app.UseSession();
-app.UseMiddleware(typeof(VisitorCounterMiddleware));
+//app.UseMiddleware(typeof(VisitorCounterMiddleware));
 app.MapControllerRoute(
     name: "default",
     pattern: "{controller=Home}/{action=Index}/{id?}");
