@@ -56,7 +56,9 @@ public class HomeController : Controller
             {
                 //context.Items["visitorId"] = visitorId;
                 //loading from DB
-                ViewerCounting? viewerCounting = _dbContext.viewerCountings.Include(x => x.ViewerLoggins).Where(b => b.ClientId == visitorId). First();
+                var ss = _dbContext.viewerCountings.Include(x => x.ViewerLoggins);
+                ViewerCounting? viewerCounting = ss.Count() >0 ? ss.Where(b => b.ClientId == visitorId).First() : null;
+
 
                 if (viewerCounting == null) //new
                 {
