@@ -57,7 +57,8 @@ public class HomeController : Controller
                 //context.Items["visitorId"] = visitorId;
                 //loading from DB
                 var ss = _dbContext.viewerCountings.Include(x => x.ViewerLoggins);
-                ViewerCounting? viewerCounting = ss.Count() >0 ? ss.Where(b => b.ClientId == visitorId).First() : null;
+                
+                ViewerCounting? viewerCounting = ss.Count() >0 ? ss.Where(b => b.ClientId == visitorId).FirstOrDefault() : null;
 
 
                 if (viewerCounting == null) //new
@@ -152,9 +153,9 @@ public class HomeController : Controller
         //if(visitorId == svisitorId)
         {
 
-            ConcurrentDictionary<string, object> visitorObj = (ConcurrentDictionary<string, object>)Config.Application["Visitor"];
-            ViewerCounting? viewerCounting = visitorObj.Keys.Contains(visitorId) ? (ViewerCounting)visitorObj[visitorId] : null;
-            //ViewerCounting? viewerCounting = _dbContext.viewerCountings.Where()
+            //ConcurrentDictionary<string, object> visitorObj = (ConcurrentDictionary<string, object>)Config.Application["Visitor"];
+            //ViewerCounting? viewerCounting = visitorObj.Keys.Contains(visitorId) ? (ViewerCounting)visitorObj[visitorId] : null;
+            ViewerCounting? viewerCounting = _dbContext.viewerCountings.Where(x => x.ClientId==visitorId).FirstOrDefault();
             ViewBag.visitorId = visitorId;
             if (viewerCounting == null)
                 return StatusCode(StatusCodes.Status404NotFound);
