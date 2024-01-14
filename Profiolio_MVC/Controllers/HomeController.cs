@@ -23,23 +23,30 @@ public class HomeController : Controller
             // var user = await _userManager.GetUserAsync(User);
         string? visitorId = (string?)HttpContext.Items["visitorId"];
         
+        UpdateUnViewedList(30);
+
         if(string.IsNullOrEmpty(visitorId))
-        return ;
+            return ;
+
 
         ViewBag.visitorId = visitorId;
         TempData["visitorId"] = visitorId;
         ConcurrentDictionary<string,object> visitorObj = (ConcurrentDictionary<string,object>)Config.Application["Visitor"];
         ViewerCounting viewerCounting =  (ViewerCounting)visitorObj[visitorId];
-        ViewerCounting? tmpVC =_dbContext.viewerCountings.Where(b => b.ClientId == viewerCounting.ClientId).FirstOrDefault();
-        if(tmpVC == null){
+        var tmpVCs =_dbContext.viewerCountings.Where(b => b.ClientId == viewerCounting.ClientId).ToList();
+        ViewerCounting? tmpVC = null;
+        if(tmpVCs == null || tmpVCs.Count() <=0  ){
 
-            tmpVC = viewerCounting;//new ViewerCounting();
+             tmpVC = viewerCounting;//new ViewerCounting();
             //tmpVC.IsCurrentViewing  = false;
             //tmpVC.ClientId          = viewerCounting.ClientId;
             //tmpVC.FirstViewing      = viewerCounting.FirstViewing;
             //tmpVC.LastViewing       = viewerCounting.LastViewing;
             _dbContext.viewerCountings.Add(tmpVC);
             _dbContext.SaveChanges();
+        }
+        else{
+            tmpVC = tmpVCs.ElementAt(0);
         }
 
         if(!tmpVC.IsCurrentViewing){
