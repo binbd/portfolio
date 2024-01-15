@@ -17,32 +17,37 @@ public class HomeController : Controller
         _dbContext = dbContext;
     }
 
-    private void CheckingViewing()
+    private void CheckingViewing(HttpContext context,string? svisitorId)
     {
         // var user = await _userManager.GetUserAsync(User);
 
         UpdateUnViewedList(30);
 
-        if (HttpContext != null)
+        if (context != null)
         {
-            string? visitorId = HttpContext.Request.Cookies["VisitorId"];
-            System.Net.IPAddress? iPAddress = HttpContext.Connection.RemoteIpAddress;
+            string? visitorId = context.Request.Cookies["VisitorId"];
+            System.Net.IPAddress? iPAddress = context.Connection.RemoteIpAddress;
             string remoteAddress = "";
             if (iPAddress != null)
                 remoteAddress = iPAddress.MapToIPv4().ToString();
-            if (visitorId == null)
+            if (string.IsNullOrEmpty(visitorId) && string.IsNullOrEmpty(svisitorId))
             {
                 //don the necessary staffs here to save the count by one
 
                 visitorId = Guid.NewGuid().ToString();
-                HttpContext.Response.Cookies.Append("VisitorId", visitorId, new CookieOptions()
+                context.Response.Cookies.Append("VisitorId", visitorId, new CookieOptions()
                 {
                     Path = "/",
                     HttpOnly = true,
                     Secure = false,
+                    Expires = DateTime.UtcNow.AddDays(30),
                 });
+                
 
             }
+
+            if(string.IsNullOrEmpty(visitorId))
+                visitorId = svisitorId;
 
             if (!Config.Application.Keys.Contains("Visitor"))
             {
@@ -52,25 +57,30 @@ public class HomeController : Controller
 
             ConcurrentDictionary<string, object> visitorObj = (ConcurrentDictionary<string, object>)Config.Application["Visitor"];
 
-            if (!visitorObj.Keys.Contains(visitorId))
+            //if (!visitorObj.Keys.Contains(visitorId))
             {
                 //context.Items["visitorId"] = visitorId;
                 //loading from DB
                 var ss = _dbContext.viewerCountings.Include(x => x.ViewerLoggins);
                 
-                ViewerCounting? viewerCounting = ss.Count() >0 ? ss.Where(b => b.ClientId == visitorId).FirstOrDefault() : null;
+                ViewerCounting? viewerCounting = ss.Where(b => b.ClientId == visitorId).FirstOrDefault();
 
 
                 if (viewerCounting == null) //new
                 {
-                    viewerCounting = new ViewerCounting();
-                    viewerCounting.ClientId = visitorId;
-                    viewerCounting.IsCurrentViewing = true;
-                    viewerCounting.FirstViewing = DateTime.UtcNow;
-                    viewerCounting.LastViewing = DateTime.UtcNow;
-                    ViewerLoggin viewerLoggin = new ViewerLoggin();
-                    viewerLoggin.ClientIp = remoteAddress;
-                    viewerLoggin.LogginTime = DateTime.UtcNow;
+                    _logger.LogInformation("Add new viewer ClientId = {clientid}",visitorId);
+                    viewerCounting = new ViewerCounting
+                    {
+                        ClientId = visitorId,
+                        IsCurrentViewing = true,
+                        FirstViewing = DateTime.UtcNow,
+                        LastViewing = DateTime.UtcNow
+                    };
+                    ViewerLoggin viewerLoggin = new ViewerLoggin
+                    {
+                        ClientIp = remoteAddress,
+                        LogginTime = DateTime.UtcNow
+                    };
                     viewerCounting.ViewerLoggins.Add(viewerLoggin);
                     _dbContext.viewerCountings.Add(viewerCounting);
                     _dbContext.SaveChanges();
@@ -86,6 +96,7 @@ public class HomeController : Controller
                             ClientIp = remoteAddress,
                             LogginTime = DateTime.UtcNow,
                         };
+                         _logger.LogInformation("Add new loggin ClientId = {clientid}",visitorId);
                         viewerCounting.IsCurrentViewing = true;
                         viewerCounting.ViewerLoggins.Add(viewerLoggin);
                         viewerCounting.LastViewing = DateTime.UtcNow;
@@ -93,10 +104,17 @@ public class HomeController : Controller
                         _dbContext.SaveChanges();
 
                     }
+                    else
+                    {
+                         viewerCounting.LastViewing = DateTime.UtcNow;
+                        _dbContext.Entry(viewerCounting).State = EntityState.Modified;
+                        _dbContext.SaveChanges();
+                    }
                 }
 
                 visitorObj[visitorId] = viewerCounting;
             }
+           
 
             ViewBag.visitorId = visitorId;
             TempData["visitorId"] = visitorId;
@@ -105,7 +123,7 @@ public class HomeController : Controller
     }
     public IActionResult Index()
     {
-        CheckingViewing();
+        //CheckingViewing();
         return View();
     }
 
@@ -116,32 +134,32 @@ public class HomeController : Controller
 
     public IActionResult About()
     {
-        CheckingViewing();
+        //CheckingViewing();
         return View();
     }
 
 
     public IActionResult Resume()
     {
-        CheckingViewing();
+        //CheckingViewing();
         return View();
     }
 
     public IActionResult Project()
     {
-        CheckingViewing();
+        //CheckingViewing();
         return View();
     }
 
     public IActionResult Contact()
     {
-        CheckingViewing();
+        //CheckingViewing();
         return View();
     }
 
     public IActionResult ViewStatistic()
     {
-        CheckingViewing();
+        //CheckingViewing();
         return View();
     }
 
@@ -150,22 +168,28 @@ public class HomeController : Controller
     {
         //string? svisitorId = (string?)TempData.Peek("visitorId");
 
-        //if(visitorId == svisitorId)
+        
         {
 
-            //ConcurrentDictionary<string, object> visitorObj = (ConcurrentDictionary<string, object>)Config.Application["Visitor"];
-            //ViewerCounting? viewerCounting = visitorObj.Keys.Contains(visitorId) ? (ViewerCounting)visitorObj[visitorId] : null;
-            ViewerCounting? viewerCounting = _dbContext.viewerCountings.Where(x => x.ClientId==visitorId).FirstOrDefault();
-            ViewBag.visitorId = visitorId;
-            if (viewerCounting == null)
-                return StatusCode(StatusCodes.Status404NotFound);
+            try
+            {
+                CheckingViewing(HttpContext,visitorId);
+            }
+            catch (System.Exception ex)
+            {
+                return StatusCode(StatusCodes.Status400BadRequest);
+            }    
+            // ViewerCounting? viewerCounting = _dbContext.viewerCountings.Where(x => x.ClientId==visitorId).FirstOrDefault();
+            // ViewBag.visitorId = visitorId;
+            // if (viewerCounting == null)
+            //     return StatusCode(StatusCodes.Status404NotFound);
 
-            if (!viewerCounting.IsCurrentViewing)
-                viewerCounting.IsCurrentViewing = true;
+            // if (!viewerCounting.IsCurrentViewing)
+            //     viewerCounting.IsCurrentViewing = true;
 
-            viewerCounting.LastViewing = DateTime.UtcNow;
-            _dbContext.Entry(viewerCounting).State = EntityState.Modified;
-            _dbContext.SaveChanges();
+            // viewerCounting.LastViewing = DateTime.UtcNow;
+            // _dbContext.Entry(viewerCounting).State = EntityState.Modified;
+            // _dbContext.SaveChanges();
         }
 
         return StatusCode(StatusCodes.Status200OK);
@@ -238,6 +262,7 @@ public class HomeController : Controller
     public IActionResult ViewerStatusUpdate()
     {
         //string? svisitorId = (string?)TempData.Peek("visitorId");
+        return StatusCode(StatusCodes.Status200OK);
         try
         {
             UpdateUnViewedList(30);
