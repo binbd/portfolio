@@ -2,26 +2,31 @@
     <div class="progress-bar" role="progressbar" style="width:0"></div>
 </div>
 <div class="container">
-        <h1 class="mt-5">Page Statistics</h1>
-
+        <h2 class="mt-5">Page Statistics</h2>
         <div class="row mt-4">
             <div class="col">
-                <h2>Total Page Views</h2>
+                <h3>Total Page Views</h3>
                 <p id="totalPageViews" class="lead">0</p>
             </div>
-	    </div>
-        <div class="row mt-4">
             <div class="col">
-                <h2>Online Viewers</h2>
+                <h3>Online Viewers</h3>
                 <p id="currentOnlineUsers" class="lead">0</p>
             </div>
-        </div>
-        <div class="row mt-4">
             <div class="col">
-                <h2>Logged In Users</h2>
+                <h3>Logged In Users</h3>
                 <p id="currentLoggedInUsers" class="lead">0</p>
             </div>
+	    </div>
+        <h2 class="mt-5">Counting Table</h2>
+        <div class="text-center">
+            <div id="divCountingTable"></div>
         </div>
+
+        <h2 class="mt-5">Loggin Table</h2>
+        <div class="text-center">
+            <div id="divLogginTable"></div>
+        </div>
+
         <input type="hidden" id="visitorId" value="@ViewBag.visitorId" />
 </div>
 

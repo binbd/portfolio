@@ -1,3 +1,4 @@
+using Microsoft.AspNetCore.SignalR;
 using Microsoft.EntityFrameworkCore;
 using Profiolio_MVC.Models;
 
@@ -21,6 +22,7 @@ namespace Profiolio_MVC.Data
 
         
         public DbSet<ViewerCounting> viewerCountings{get;set;}
+        public DbSet<ViewerLoggin> ViewerLoggin {get;set;}
         public DbSet<SettingsNumber> settingsNumbers{get;set;}
 
 

@@ -62,9 +62,8 @@ public class HomeController : Controller
                 //context.Items["visitorId"] = visitorId;
                 //loading from DB
                 var ss = _dbContext.viewerCountings.Include(x => x.ViewerLoggins);
-                
-                ViewerCounting? viewerCounting = ss.Where(b => b.ClientId == visitorId).FirstOrDefault();
-
+              
+                ViewerCounting? viewerCounting = ss.FirstOrDefault(b => b.ClientId == visitorId);//.FirstOrDefault();
 
                 if (viewerCounting == null) //new
                 {
@@ -167,8 +166,6 @@ public class HomeController : Controller
     public IActionResult ViewerPing(string? visitorId)
     {
         //string? svisitorId = (string?)TempData.Peek("visitorId");
-
-        
         {
 
             try
@@ -196,6 +193,13 @@ public class HomeController : Controller
 
     }
 
+    //  public int solution(int[] A) {
+    //     Dictionary <int,int> mk = new Dictionary<int,int>();
+    //     for(int i=0;i<A.Length;i++)
+    //         mk[A[i]]=1;
+    //     return mk.Count;
+    //     // Implement your solution here
+    // }
     public int UpdateUnViewedList(int nTimeOut)
     {
         var ViewerCountings = _dbContext.viewerCountings.Where(x => x.IsCurrentViewing == true).ToList();
@@ -300,4 +304,36 @@ public class HomeController : Controller
     {
         return View(new ErrorViewModel { RequestId = Activity.Current?.Id ?? HttpContext.TraceIdentifier });
     }
+
+    [HttpGet]
+    public IActionResult BuildCountingTable()
+    {
+        //return PartialView("_ToDoTable",_dbcontext.ToDos.Where(x=>x.userIdentityTest.Id == currentUserId).ToList());
+        return PartialView("_TableViewerCounting",GetCountingTable());
+    }
+
+     [HttpGet]
+    public IActionResult BuildLogginTable()
+    {
+        //return PartialView("_ToDoTable",_dbcontext.ToDos.Where(x=>x.userIdentityTest.Id == currentUserId).ToList());
+        return PartialView("_TableViewerLoggin",GetViewerLoginTable());
+    }
+
+    private IEnumerable<ViewerCounting> GetCountingTable()
+    {
+        //  var user = await _userManager.GetUserAsync(User);
+        IEnumerable<ViewerCounting> myToDos = _dbContext.viewerCountings.OrderByDescending(x => x.Id).Take(100).ToList();
+
+        return myToDos;
+    }
+
+    private IEnumerable<ViewerLoggin> GetViewerLoginTable()
+    {
+        //  var user = await _userManager.GetUserAsync(User);
+        IEnumerable<ViewerLoggin> myToDos = _dbContext.ViewerLoggin.OrderByDescending(x => x.Id).Take(100).ToList();
+
+        return myToDos;
+    }
+
+
 }

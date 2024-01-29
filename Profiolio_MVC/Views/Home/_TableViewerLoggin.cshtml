@@ -1,0 +1,32 @@
+@model IEnumerable<ViewerLoggin>
+<table class="table">
+    <tr>
+        <th>
+            @Html.DisplayNameFor(model => model.ViewerCountingId)
+        </th>
+        <th>
+            @Html.DisplayNameFor(model => model.ClientIp)
+        </th>
+        <th>
+            @Html.DisplayNameFor(model => model.LogginTime)
+        </th>
+    </tr>
+    
+    @if(Model!=null)
+    {
+        @foreach(var item in Model){
+            <tr>
+                <td>
+                    @Html.DisplayFor(modelItem => item.ViewerCountingId)
+                </td>
+                <td>
+                    @Html.DisplayFor(modelItem => item.ClientIp)
+                </td>
+                <td>
+                    @Html.DisplayFor(modelItem => item.LogginTime)
+                </td>
+            </tr>
+        }   
+    }
+
+</table>

@@ -25,6 +25,9 @@ function SetGetViewingStatisticTimer(timer)
 
             //doAjax(data,'ViewerPing','GET');
             doAjax('','GetViewStatistic','GET').then((data) => fillData(data));
+            doAjax('','BuildCountingTable','get').then((data) => fillCountingTable(data));
+            doAjax('','BuildLogginTable','get').then((data) => fillLogginTable(data));
+            
             nCurrent = 0;
         }
         nCurrent++;
@@ -34,6 +37,22 @@ function SetGetViewingStatisticTimer(timer)
     }, 1000);
 }
 
+function fillCountingTable(data)
+{
+    $('#divCountingTable').html(data);
+    //addTblCheckboxListener(".ActiveCheck");
+}
+
+
+function fillLogginTable(data)
+{
+    $('#divLogginTable').html(data);
+    //addTblCheckboxListener(".ActiveCheck");
+}
+
+
+
 $(function(){
-    SetGetViewingStatisticTimer(60000);
+    SetGetViewingStatisticTimer(10000);
+
 });

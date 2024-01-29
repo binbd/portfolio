@@ -1,0 +1,38 @@
+@model IEnumerable<ViewerCounting>
+<table class="table">
+    <tr>
+        <th>
+            @Html.DisplayNameFor(model => model.Id)
+        </th>
+        <th>
+            @Html.DisplayNameFor(model => model.ClientId)
+        </th>
+        <th>
+            @Html.DisplayNameFor(model => model.IsCurrentViewing)
+        </th>
+        <th>
+            @Html.DisplayNameFor(model => model.LastViewing)
+        </th>
+    </tr>
+    
+    @if(Model!=null)
+    {
+        @foreach(var item in Model){
+            <tr>
+                 <td>
+                    @Html.DisplayFor(modelItem => item.Id)
+                </td>
+                <td>
+                    @Html.DisplayFor(modelItem => item.ClientId)
+                </td>
+                <td>
+                    @Html.CheckBoxFor(modelItem => item.IsCurrentViewing)
+                </td>
+                <td>
+                    @Html.DisplayFor(modelItem => item.LastViewing)
+                </td>
+            </tr>
+        }   
+    }
+
+</table>

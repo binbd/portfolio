@@ -10,25 +10,30 @@ function toggleNavMenu (clas){
 
 }
 
-function SetViewingPingTimer(timer)
-{
-    setInterval(function() {
-        var val = $('#visitorId').val();
+SendPings = ()=>{
+    var val = $('#visitorId').val();
         var data = {
             visitorId:val
         }
         var pathname = window.location.pathname;
         console.log(pathname);
         var url = pathname ? '' : 'Home/';
+        if(pathname=="/")
+            url = 'Home/';
+        
         doAjax(data,url + 'ViewerPing','GET');
         doAjax('',url + 'ViewerStatusUpdate','GET',function(error){
             console.log(error);
         });
-    }, timer);
+}
+
+function SetViewingPingTimer(timer)
+{
+    setInterval(SendPings, timer);
 }
 
 
 $(function () {
-    
-    SetViewingPingTimer(60000);
+    SendPings();
+    SetViewingPingTimer(10000);
  });
