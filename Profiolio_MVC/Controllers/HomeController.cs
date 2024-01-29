@@ -1,5 +1,6 @@
 ﻿using System.Collections.Concurrent;
 using System.Diagnostics;
+using System.Net.Sockets;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Profiolio_MVC.Data;
@@ -17,6 +18,57 @@ public class HomeController : Controller
         _dbContext = dbContext;
     }
 
+    public System.Net.IPAddress? GetRemoteHostIpAddressUsingXForwardedFor(HttpContext httpContext)
+    {
+        System.Net.IPAddress? remoteIpAddress = null;
+        var forwardedFor = httpContext.Request.Headers["X-Forwarded-For"].FirstOrDefault();
+
+        if (!string.IsNullOrEmpty(forwardedFor))
+        {
+            var ips = forwardedFor.Split(',', StringSplitOptions.RemoveEmptyEntries)
+                                .Select(s => s.Trim());
+
+            foreach (var ip in ips)
+            {
+                if (System.Net.IPAddress.TryParse(ip, out var address) &&
+                    (address.AddressFamily is AddressFamily.InterNetwork
+                    or AddressFamily.InterNetworkV6))
+                {
+                    remoteIpAddress = address;
+                    break;
+                }
+            }
+        }
+
+        return remoteIpAddress;
+    }
+
+    public System.Net.IPAddress? GetRemoteHostIpAddressUsingXRealIp(HttpContext httpContext)
+    {
+        System.Net.IPAddress? remoteIpAddress = null;
+        var xRealIpExists = httpContext.Request.Headers.TryGetValue("X-Real-IP", out var xRealIp);
+
+        if(xRealIpExists)
+        {
+            if (!System.Net.IPAddress.TryParse(xRealIp, out System.Net.IPAddress? address))
+            {
+                return remoteIpAddress;
+            }
+
+            var isValidIP = address.AddressFamily is AddressFamily.InterNetwork
+                            or AddressFamily.InterNetworkV6;
+            
+            if (isValidIP)
+            {
+                remoteIpAddress = address;
+            }
+
+            return remoteIpAddress;
+        }
+
+        return remoteIpAddress;
+    }
+
     private void CheckingViewing(HttpContext context,string? svisitorId)
     {
         // var user = await _userManager.GetUserAsync(User);
@@ -27,9 +79,18 @@ public class HomeController : Controller
         {
             string? visitorId = context.Request.Cookies["VisitorId"];
             System.Net.IPAddress? iPAddress = context.Connection.RemoteIpAddress;
+            System.Net.IPAddress? iPAddressXForwardedFor = GetRemoteHostIpAddressUsingXForwardedFor(context);
+            System.Net.IPAddress? iPAddressXRealIp = GetRemoteHostIpAddressUsingXRealIp(context);
             string remoteAddress = "";
             if (iPAddress != null)
                 remoteAddress = iPAddress.MapToIPv4().ToString();
+
+            if(iPAddressXForwardedFor !=null)
+                remoteAddress += "|" + iPAddressXForwardedFor.MapToIPv4().ToString();
+
+            if(iPAddressXRealIp !=null)
+                remoteAddress += "|" + iPAddressXRealIp.MapToIPv4().ToString();
+            
             if (string.IsNullOrEmpty(visitorId) && string.IsNullOrEmpty(svisitorId))
             {
                 //don the necessary staffs here to save the count by one
@@ -40,7 +101,7 @@ public class HomeController : Controller
                     Path = "/",
                     HttpOnly = true,
                     Secure = false,
-                    Expires = DateTime.UtcNow.AddDays(30),
+                    //Expires = DateTime.UtcNow.AddDays(30),
                 });
                 
 
